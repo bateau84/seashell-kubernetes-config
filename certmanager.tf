@@ -1,14 +1,3 @@
-resource "kubernetes_namespace" "cert-manager" {
-  metadata {
-    labels = {
-      "cert-manager.io/disable-validation" = "true"
-      "app.kubernetes.io/name" : "cert-manager"
-      "app.kubernetes.io/part-of" : "cert-manager"
-    }
-    name = "cert-manager"
-  }
-}
-
 resource "null_resource" "cert-manager-crd" {
   triggers = {
     config = sha256(file("${path.module}/certmanager/certmanager-crds.yaml"))
@@ -20,6 +9,34 @@ resource "null_resource" "cert-manager-crd" {
       KUBECONFIG        = var.kube_config
     }
   }
+}
+
+resource "null_resource" "cert-manager-webhookconfiguration" {
+  triggers = {
+    config = sha256(file("${path.module}/certmanager/webhook.yaml"))
+  }
+
+  depends_on = [null_resource.cert-manager-crd]
+
+  provisioner "local-exec" {
+    command = "kubectl apply -f ${path.module}/certmanager/certmanager-crds.yaml"
+    environment = {
+      KUBECONFIG        = var.kube_config
+    }
+  }
+}
+
+resource "kubernetes_namespace" "cert-manager" {
+  metadata {
+    labels = {
+      "cert-manager.io/disable-validation" = "true"
+      "app.kubernetes.io/name" : "cert-manager"
+      "app.kubernetes.io/part-of" : "cert-manager"
+    }
+    name = "cert-manager"
+  }
+
+  depends_on = [null_resource.cert-manager-crd]
 }
 
 resource "kubernetes_service_account" "cert-manager-cainjector" {
@@ -41,6 +58,18 @@ resource "kubernetes_service_account" "cert-manager" {
     labels = {
       "app" = "cert-manager"
       "app.kubernetes.io/name" = "cert-manager"
+      "app.kubernetes.io/instance" = "cert-manager"
+    }
+  }
+}
+
+resource "kubernetes_service_account" "cert-manager-webhook" {
+  metadata {
+    name      = "cert-manager-webhook"
+    namespace = kubernetes_namespace.cert-manager.metadata[0].name
+    labels = {
+      "app" = "webhook"
+      "app.kubernetes.io/name" = "webhook"
       "app.kubernetes.io/instance" = "cert-manager"
     }
   }
@@ -143,13 +172,75 @@ resource "kubernetes_role_binding" "cert-manager-cainjector_leaderelection" {
   role_ref {
     api_group = "rbac.authorization.k8s.io"
     kind      = "Role"
-    name      = "cert-manager-cainjector:leaderelection"
+    name      =  kubernetes_role.cert-manager-cainjector_leaderelection.metadata[0].name
   }
 
   subject {
     kind      = "ServiceAccount"
     namespace = kubernetes_namespace.cert-manager.metadata[0].name
     name      = kubernetes_service_account.cert-manager-cainjector.metadata[0].name
+  }
+}
+
+resource "kubernetes_role_binding" "cert-manager-webhook_auth-delegator" {
+  metadata {
+    name = "cert-manager-webhook:auth-delegator"
+    labels = {
+      "app" = "webhook"
+      "app.kubernetes.io/name" = "webhook"
+      "app.kubernetes.io/instance" = "cert-manager"
+    }
+  }
+  role_ref {
+    api_group = "rbac.authorization.k8s.io"
+    kind      = "Role"
+    name      = "extension-apiserver-authentication-reader"
+  }
+
+  subject {
+    kind      = "ServiceAccount"
+    namespace = kubernetes_namespace.cert-manager.metadata[0].name
+    name      = kubernetes_service_account.cert-manager-webhook.metadata[0].name
+  }
+}
+
+resource "kubernetes_role_binding" "cert-manager-webhook_webhook-authentication-reader" {
+  metadata {
+    name = "cert-manager-webhook:webhook-authentication-reader"
+    namespace = kubernetes_namespace.cert-manager.metadata[0].name
+    labels = {
+      "app" = "webhook"
+      "app.kubernetes.io/name" = "webhook"
+      "app.kubernetes.io/instance" = "cert-manager"
+    }
+  }
+  role_ref {
+    api_group = "rbac.authorization.k8s.io"
+    kind      = "Role"
+    name      = "extension-apiserver-authentication-reader"
+  }
+
+  subject {
+    kind      = "ServiceAccount"
+    namespace = kubernetes_namespace.cert-manager.metadata[0].name
+    name      = kubernetes_service_account.cert-manager.metadata[0].name
+  }
+}
+
+resource "kubernetes_cluster_role" "cert-manager-webhook_webhook-requester" {
+  metadata {
+    name = "cert-manager-webhook:webhook-requester"
+    labels = {
+      "app" = "webhook"
+      "app.kubernetes.io/name" = "webhook"
+      "app.kubernetes.io/instance" = "cert-manager"
+    }
+  }
+
+  rule {
+    api_groups = ["admission.cert-manager.io"]
+    resources  = ["certificates", "certificaterequests", "issuers", "clusterissuers"]
+    verbs      = ["create"]
   }
 }
 
@@ -326,7 +417,7 @@ resource "kubernetes_cluster_role" "cert-manager-controller-orders" {
     verbs      = ["get", "list", "watch"]
   }
   rule {
-    api_groups = ["acme.cert-manager.io"]
+    api_groups = ["cert-manager.io"]
     resources  = ["clusterissuers", "issuers"]
     verbs      = ["get", "list", "watch"]
   }
@@ -375,7 +466,7 @@ resource "kubernetes_cluster_role" "cert-manager-controller-challenges" {
     verbs      = ["get", "list", "watch"]
   }
   rule {
-    api_groups = ["acme.cert-manager.io"]
+    api_groups = ["cert-manager.io"]
     resources  = ["issuers", "clusterissuers"]
     verbs      = ["get", "list", "watch"]
   }
@@ -654,6 +745,34 @@ resource "kubernetes_service" "cert-manager" {
   }
 }
 
+resource "kubernetes_service" "cert-manager-webhook" {
+  metadata {
+    name      = "cert-manager-webhook"
+    namespace = kubernetes_namespace.cert-manager.metadata[0].name
+    labels = {
+      "app" = "webhook"
+      "app.kubernetes.io/name" = "webhook"
+      "app.kubernetes.io/instance" = "cert-manager"
+    }
+  }
+
+  spec {
+    type = "ClusterIP"
+
+    port {
+      protocol    = "TCP"
+      port        = 443
+      target_port = 10250
+    }
+
+    selector = {
+      "app" = "webhook"
+      "app.kubernetes.io/name" = "webhook"
+      "app.kubernetes.io/instance" = "cert-manager"
+    }
+  }
+}
+
 resource "kubernetes_deployment" "cert-manager-cainjector" {
   metadata {
     name      = "cert-manager-cainjector"
@@ -813,6 +932,7 @@ resource "kubernetes_deployment" "cert-manager" {
 
           port {
             container_port = 9402
+            protocol = "TCP"
           }
 
           volume_mount {
@@ -826,6 +946,125 @@ resource "kubernetes_deployment" "cert-manager" {
           name = "service-account"
           secret {
             secret_name = kubernetes_service_account.cert-manager.default_secret_name
+          }
+        }
+      }
+    }
+  }
+}
+
+resource "kubernetes_deployment" "cert-manager-webhook" {
+  metadata {
+    name      = "cert-manager-webhook"
+    namespace = kubernetes_namespace.cert-manager.metadata[0].name
+    labels = {
+      "app" = "webhook"
+      "app.kubernetes.io/name" = "webhook"
+      "app.kubernetes.io/instance" = "cert-manager"
+    }
+  }
+
+  spec {
+    replicas = "1"
+
+    selector {
+      match_labels = {
+        "app" = "webhook"
+        "app.kubernetes.io/name" = "webhook"
+        "app.kubernetes.io/instance" = "cert-manager"
+      }
+    }
+
+    template {
+      metadata {
+        labels = {
+          "app" = "webhook"
+          "app.kubernetes.io/name" = "webhook"
+          "app.kubernetes.io/instance" = "cert-manager"
+        }
+      }
+
+      spec {
+        service_account_name = kubernetes_service_account.cert-manager-webhook.metadata[0].name
+
+        container {
+          name              = "cert-manager"
+          image             = "quay.io/jetstack/cert-manager-webhook:${var.certmanager_version}"
+          image_pull_policy = "Always"
+
+          args = [
+            "--v=2",
+            "--secure-port=10250",
+            "--tls-cert-file=/certs/tls.crt",
+            "--tls-private-key-file=/certs/tls.key"
+          ]
+
+          env {
+            name = "POD_NAMESPACE"
+            value_from {
+              field_ref {
+                field_path = "metadata.namespace"
+              }
+            }
+          }
+
+          resources {
+            requests  {
+              cpu = local.certmanager_actual_resource_requests["cpu"]
+              memory = local.certmanager_actual_resource_requests["memory"]
+            }
+
+            limits {
+              cpu = local.certmanager_actual_resource_limits["cpu"]
+              memory = local.certmanager_actual_resource_limits["memory"]
+            }
+          }
+
+          liveness_probe {
+            http_get {
+              path = "/livez"
+              port = "6080"
+              scheme = "HTTP"
+            }
+          }
+
+          readiness_probe {
+            http_get {
+              path = "/livez"
+              port = "6080"
+              scheme = "HTTP"
+            }
+          }
+
+          port {
+            container_port = 10250
+            protocol = "TCP"
+          }
+
+          volume_mount {
+            mount_path = "/var/run/secrets/kubernetes.io/serviceaccount"
+            name       = "service-account"
+            read_only  = true
+          }
+
+          volume_mount {
+            mount_path = "/certs"
+            name       = "certs"
+            read_only  = true
+          }
+        }
+
+        volume {
+          name = "service-account"
+          secret {
+            secret_name = kubernetes_service_account.cert-manager.default_secret_name
+          }
+        }
+
+        volume {
+          name = "certs"
+          secret {
+            secret_name = "cert-manager-webhook-tls"
           }
         }
       }
@@ -849,7 +1088,7 @@ resource "null_resource" "clusterissuer-letsencrypt" {
     template      = data.template_file.clusterissuer-letsencrypt.rendered
   }
 
-  depends_on = [null_resource.cert-manager-crd]
+  depends_on = [null_resource.cert-manager-crd, kubernetes_deployment.cert-manager-webhook]
 
   provisioner "local-exec" {
     command = "${path.module}/kubectl-wrapper.sh"

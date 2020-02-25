@@ -175,9 +175,9 @@ resource "kubernetes_ingress" "transmission" {
         name        = "transmission"
         namespace   = kubernetes_namespace.namespace.metadata[0].name
         annotations = {
-            "certmanager.k8s.io/acme-challenge-type" = "http01"
-            "certmanager.k8s.io/acme-http01-edit-in-place" = "false"
-            "certmanager.k8s.io/cluster-issuer" = "letsencrypt"
+            "cert-manager.io/acme-challenge-type" = "http01"
+            "cert-manager.io/acme-http01-edit-in-place" = "false"
+            "cert-manager.io/cluster-issuer" = "letsencrypt"
             "nginx.ingress.kubernetes.io/auth-type" = "basic"
             "nginx.ingress.kubernetes.io/auth-secret" = "seashell-auth"
             "nginx.ingress.kubernetes.io/auth-realm" = "Authentication Required"

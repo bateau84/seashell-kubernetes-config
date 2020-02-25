@@ -1,194 +1,75 @@
----
-# Source: cert-manager/charts/webhook/templates/apiservice.yaml
-apiVersion: apiregistration.k8s.io/v1beta1
-kind: APIService
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
 metadata:
-    name: v1beta1.admission.certmanager.k8s.io
-    labels:
-        app: webhook
-        app.kubernetes.io/name: webhook
-        app.kubernetes.io/instance:  cert-manager
-        app.kubernetes.io/managed-by: Tiller
-        helm.sh/chart: webhook-v0.9.1
-    annotations:
-        certmanager.k8s.io/inject-ca-from: "cert-manager/cert-manager-webhook-webhook-tls"
-spec:
-    group: admission.certmanager.k8s.io
-    groupPriorityMinimum: 1000
-    versionPriority: 15
-    service:
+  name: cert-manager-webhook
+  labels:
+    app: webhook
+    app.kubernetes.io/name: webhook
+    app.kubernetes.io/instance: cert-manager
+    app.kubernetes.io/managed-by: Tiller
+    helm.sh/chart: cert-manager-v0.13.1
+  annotations:
+    cert-manager.io/inject-ca-from-secret: "cert-manager/cert-manager-webhook-tls"
+webhooks:
+  - name: webhook.cert-manager.io
+    rules:
+      - apiGroups:
+          - "cert-manager.io"
+          - "acme.cert-manager.io"
+        apiVersions:
+          - v1alpha2
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - "*/*"
+    failurePolicy: Fail
+    sideEffects: None
+    clientConfig:
+      service:
         name: cert-manager-webhook
         namespace: "cert-manager"
-    version: v1beta1
+        path: /mutate
 ---
-# Source: cert-manager/charts/webhook/templates/pki.yaml
----
-# Create a selfsigned Issuer, in order to create a root CA certificate for
-# signing webhook serving certificates
-apiVersion: certmanager.k8s.io/v1alpha1
-kind: Issuer
-metadata:
-    name: cert-manager-webhook-selfsign
-    namespace: "cert-manager"
-    labels:
-        app: webhook
-        app.kubernetes.io/name: webhook
-        app.kubernetes.io/instance:  cert-manager
-        app.kubernetes.io/managed-by: Tiller
-        helm.sh/chart: webhook-v0.9.1
-spec:
-    selfSigned: {}
----
-# Generate a CA Certificate used to sign certificates for the webhook
-apiVersion: certmanager.k8s.io/v1alpha1
-kind: Certificate
-metadata:
-    name: cert-manager-webhook-ca
-    namespace: "cert-manager"
-    labels:
-        app: webhook
-        app.kubernetes.io/name: webhook
-        app.kubernetes.io/instance:  cert-manager
-        app.kubernetes.io/managed-by: Tiller
-        helm.sh/chart: webhook-v0.9.1
-spec:
-    secretName: cert-manager-webhook-ca
-    duration: 43800h # 5y
-    issuerRef:
-    name: cert-manager-webhook-selfsign
-    commonName: "ca.webhook.cert-manager"
-    isCA: true
----
-# Create an Issuer that uses the above generated CA certificate to issue certs
-apiVersion: certmanager.k8s.io/v1alpha1
-kind: Issuer
-metadata:
-    name: cert-manager-webhook-ca
-    namespace: "cert-manager"
-    labels:
-        app: webhook
-        app.kubernetes.io/name: webhook
-        app.kubernetes.io/instance:  cert-manager
-        app.kubernetes.io/managed-by: Tiller
-        helm.sh/chart: webhook-v0.9.1
-spec:
-    ca:
-    secretName: cert-manager-webhook-ca
----
-# Finally, generate a serving certificate for the webhook to use
-apiVersion: certmanager.k8s.io/v1alpha1
-kind: Certificate
-metadata:
-    name: cert-manager-webhook-webhook-tls
-    namespace: "cert-manager"
-    labels:
-        app: webhook
-        app.kubernetes.io/name: webhook
-        app.kubernetes.io/instance:  cert-manager
-        app.kubernetes.io/managed-by: Tiller
-        helm.sh/chart: webhook-v0.9.1
-spec:
-    secretName: cert-manager-webhook-webhook-tls
-    duration: 8760h # 1y
-    issuerRef:
-    name: cert-manager-webhook-ca
-    dnsNames:
-    - cert-manager-webhook
-    - cert-manager-webhook.cert-manager
-    - cert-manager-webhook.cert-manager.svc
----
-# Source: cert-manager/charts/webhook/templates/validating-webhook.yaml
 apiVersion: admissionregistration.k8s.io/v1beta1
 kind: ValidatingWebhookConfiguration
 metadata:
-    name: cert-manager-webhook
-    labels:
-        app: webhook
-        app.kubernetes.io/name: webhook
-        app.kubernetes.io/instance:  cert-manager
-        app.kubernetes.io/managed-by: Tiller
-        helm.sh/chart: webhook-v0.9.1
-    annotations:
-        certmanager.k8s.io/inject-apiserver-ca: "true"
+  name: cert-manager-webhook
+  labels:
+    app: webhook
+    app.kubernetes.io/name: webhook
+    app.kubernetes.io/instance: cert-manager
+    app.kubernetes.io/managed-by: Tiller
+    helm.sh/chart: cert-manager-v0.13.1
+  annotations:
+    cert-manager.io/inject-ca-from-secret: "cert-manager/cert-manager-webhook-tls"
 webhooks:
-    - name: certificates.admission.certmanager.k8s.io
+  - name: webhook.cert-manager.io
     namespaceSelector:
-        matchExpressions:
-        - key: "certmanager.k8s.io/disable-validation"
+      matchExpressions:
+      - key: "cert-manager.io/disable-validation"
         operator: "NotIn"
         values:
         - "true"
-        - key: "name"
+      - key: "name"
         operator: "NotIn"
         values:
         - cert-manager
     rules:
-        - apiGroups:
-            - "certmanager.k8s.io"
+      - apiGroups:
+          - "cert-manager.io"
+          - "acme.cert-manager.io"
         apiVersions:
-            - v1alpha1
+          - v1alpha2
         operations:
-            - CREATE
-            - UPDATE
+          - CREATE
+          - UPDATE
         resources:
-            - certificates
+          - "*/*"
     failurePolicy: Fail
+    sideEffects: None
     clientConfig:
-        service:
-        name: kubernetes
-        namespace: default
-        path: /apis/admission.certmanager.k8s.io/v1beta1/certificates
-    - name: issuers.admission.certmanager.k8s.io
-    namespaceSelector:
-        matchExpressions:
-        - key: "certmanager.k8s.io/disable-validation"
-        operator: "NotIn"
-        values:
-        - "true"
-        - key: "name"
-        operator: "NotIn"
-        values:
-        - cert-manager
-    rules:
-        - apiGroups:
-            - "certmanager.k8s.io"
-        apiVersions:
-            - v1alpha1
-        operations:
-            - CREATE
-            - UPDATE
-        resources:
-            - issuers
-    failurePolicy: Fail
-    clientConfig:
-        service:
-        name: kubernetes
-        namespace: default
-        path: /apis/admission.certmanager.k8s.io/v1beta1/issuers
-    - name: clusterissuers.admission.certmanager.k8s.io
-    namespaceSelector:
-        matchExpressions:
-        - key: "certmanager.k8s.io/disable-validation"
-        operator: "NotIn"
-        values:
-        - "true"
-        - key: "name"
-        operator: "NotIn"
-        values:
-        - cert-manager
-    rules:
-        - apiGroups:
-            - "certmanager.k8s.io"
-        apiVersions:
-            - v1alpha1
-        operations:
-            - CREATE
-            - UPDATE
-        resources:
-            - clusterissuers
-    failurePolicy: Fail
-    clientConfig:
-        service:
-        name: kubernetes
-        namespace: default
-        path: /apis/admission.certmanager.k8s.io/v1beta1/clusterissuers
+      service:
+        name: cert-manager-webhook
+        namespace: "cert-manager"
+        path: /mutate

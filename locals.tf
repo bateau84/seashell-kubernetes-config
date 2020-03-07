@@ -28,3 +28,8 @@ locals {
   certmanager_webhook_actual_resource_requests = merge(var.default_resource_requests, var.certmanager_webhook_resource_requests)
   certmanager_webhook_actual_resource_limits = merge(var.default_resource_limits, var.certmanager_webhook_resource_limits)
 }
+
+locals {
+  godaddy_webhook_actual_resource_requests = merge(var.default_resource_requests, var.godaddy_webhook_resource_requests)
+  godaddy_webhook_actual_resource_limits = merge(var.default_resource_limits, var.godaddy_webhook_resource_limits)
+}

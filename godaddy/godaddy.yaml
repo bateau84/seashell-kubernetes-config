@@ -1,0 +1,68 @@
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+    name: godaddy-webhook-ca
+    namespace: "cert-manager"
+    labels:
+        app.kubernetes.io/name: godaddy-webhook
+        helm.sh/chart: godaddy-webhook-0.1.0
+        app.kubernetes.io/instance: godaddy-webhook
+        app.kubernetes.io/version: "0.1.1"
+        app.kubernetes.io/managed-by: Helm
+spec:
+    secretName: godaddy-webhook-ca
+    duration: 43800h # 5y
+    issuerRef:
+        name: godaddy-webhook-selfsign
+    commonName: "ca.godaddy-webhook.cert-manager"
+    isCA: true
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+    name: godaddy-webhook-webhook-tls
+    namespace: "cert-manager"
+    labels:
+        app.kubernetes.io/name: godaddy-webhook
+        helm.sh/chart: godaddy-webhook-0.1.0
+        app.kubernetes.io/instance: godaddy-webhook
+        app.kubernetes.io/version: "0.1.1"
+        app.kubernetes.io/managed-by: Helm
+spec:
+    secretName: godaddy-webhook-webhook-tls
+    duration: 8760h # 1y
+    issuerRef:
+        name: godaddy-webhook-ca
+    dnsNames:
+    - godaddy-webhook
+    - godaddy-webhook.cert-manager
+    - godaddy-webhook.cert-manager.svc
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Issuer
+metadata:
+    name: godaddy-webhook-selfsign
+    namespace: "cert-manager"
+    labels:
+        app.kubernetes.io/name: godaddy-webhook
+        helm.sh/chart: godaddy-webhook-0.1.0
+        app.kubernetes.io/instance: godaddy-webhook
+        app.kubernetes.io/version: "0.1.1"
+        app.kubernetes.io/managed-by: Helm
+spec:
+    selfSigned: {}
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Issuer
+metadata:
+    name: godaddy-webhook-ca
+    namespace: "cert-manager"
+    labels:
+        app.kubernetes.io/name: godaddy-webhook
+        helm.sh/chart: godaddy-webhook-0.1.0
+        app.kubernetes.io/instance: godaddy-webhook
+        app.kubernetes.io/version: "0.1.1"
+        app.kubernetes.io/managed-by: Helm
+spec:
+    ca:
+        secretName: godaddy-webhook-ca

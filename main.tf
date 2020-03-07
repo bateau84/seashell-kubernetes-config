@@ -4,6 +4,19 @@ resource "kubernetes_namespace" "namespace" {
     }
 }
 
+resource "kubernetes_secret" "auth" {
+    metadata {
+        name = var.auth_secret_name
+        namespace = kubernetes_namespace.namespace.metadata[0].name
+    }
+
+    data = { 
+        auth = data.lastpass_secret.seashell-auth.note
+    }
+
+    type = "Opaque"
+}
+
 module "ingress-nginx" {
     source  = "git@github.com:bateau84/terraform-kubernetes-ingress-nginx"
 

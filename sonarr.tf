@@ -169,7 +169,7 @@ resource "kubernetes_ingress" "sonarr" {
             "cert-manager.io/acme-http01-edit-in-place" = "false"
             "cert-manager.io/cluster-issuer" = "letsencrypt"
             "nginx.ingress.kubernetes.io/auth-type" = "basic"
-            "nginx.ingress.kubernetes.io/auth-secret" = "seashell-auth"
+            "nginx.ingress.kubernetes.io/auth-secret" = var.auth_secret_name
             "nginx.ingress.kubernetes.io/auth-realm" = "Authentication Required"
         }
     }

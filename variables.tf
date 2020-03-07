@@ -6,6 +6,10 @@ variable "base_dns_name" {
   type = string
 }
 
+variable "auth_secret_name" {
+  type = string
+}
+
 variable "namespace" {
     description = "Namespace to create nzbget, transmission, radarr and so on deployments in"
     type        = string

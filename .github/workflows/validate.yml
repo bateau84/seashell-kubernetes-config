@@ -12,3 +12,4 @@ jobs:
       - uses: volcano-coffee-company/terraform-validate@v1
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+          submodules: true

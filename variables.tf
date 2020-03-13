@@ -33,6 +33,18 @@ variable "sonarr_listen_port" {
     type = string
 }
 
+variable "sonarr_volume_mounts" {
+    type = list(
+        object(
+            {
+                name = string
+                mount_path = string
+                path = string
+            }
+        )
+    )
+}
+
 variable "radarr_nodeselector" {
     default = "morespace"
     type = string
@@ -41,6 +53,18 @@ variable "radarr_nodeselector" {
 variable "radarr_listen_port" {
     default = "7878"
     type = string
+}
+
+variable "radarr_volume_mounts" {
+    type = list(
+        object(
+            {
+                name = string
+                mount_path = string
+                path = string
+            }
+        )
+    )
 }
 
 variable "transmission_nodeselector" {
@@ -58,6 +82,18 @@ variable "transmission_peer_port" {
     type = string
 }
 
+variable "transmission_volume_mounts" {
+    type = list(
+        object(
+            {
+                name = string
+                mount_path = string
+                path = string
+            }
+        )
+    )
+}
+
 variable "nzbget_nodeselector" {
     default = "morespace"
     type = string
@@ -68,9 +104,33 @@ variable "nzbget_listen_port" {
     type = string
 }
 
+variable "nzbget_volume_mounts" {
+    type = list(
+        object(
+            {
+                name = string
+                mount_path = string
+                path = string
+            }
+        )
+    )
+}
+
 variable "grafana_listen_port" {
     default = "3000"
     type = string
+}
+
+variable "grafana_volume_mounts" {
+    type = list(
+        object(
+            {
+                name = string
+                mount_path = string
+                path = string
+            }
+        )
+    )
 }
 
 variable "certmanager_version" {

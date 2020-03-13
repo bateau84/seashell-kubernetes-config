@@ -43,6 +43,18 @@ variable "radarr_listen_port" {
     type = string
 }
 
+variable "radarr_volume_mounts" {
+    type = list(
+        object(
+            {
+                name = string
+                mount_path = string
+                path = string
+            }
+        )
+    )
+}
+
 variable "transmission_nodeselector" {
     default = "morespace"
     type = string

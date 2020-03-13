@@ -33,29 +33,12 @@ resource "kubernetes_deployment" "nzbget" {
                     image = "linuxserver/nzbget:latest"
                     image_pull_policy = "Always"
                     
-                    volume_mount {
-                        name = "config"
-                        mount_path = "/config"
-                    }
-                    volume_mount {
-                        name = "transcode"
-                        mount_path = "/transcode"
-                    }
-                    volume_mount {
-                        name = "downloads"
-                        mount_path = "/downloads"
-                    }
-                    volume_mount {
-                        name = "disk1"
-                        mount_path = "/library/disk1"
-                    }
-                    volume_mount {
-                        name = "disk2"
-                        mount_path = "/library/disk2"
-                    }
-                    volume_mount {
-                        name = "disk3"
-                        mount_path = "/library/disk3"
+                    dynamic "volume_mount" {
+                        for_each = var.nzbget_volume_mounts
+                        content {
+                            name = volume_mount.value.name
+                            mount_path = volume_mount.value.mount_path
+                        }
                     }
                     
                     env {
@@ -77,40 +60,14 @@ resource "kubernetes_deployment" "nzbget" {
                     }
                 }
 
-                volume {
-                    name = "config"
-                    host_path {
-                        path = "/home/bateau/opt/nzbget"
-                    }
-                }
-                volume {
-                    name = "transcode"
-                    host_path {
-                        path = "/media/ssd/plex/transcode"
-                    }
-                }
-                volume {
-                    name = "downloads"
-                    host_path {
-                        path = "/data/disk1/downloads"
-                    }
-                }
-                volume {
-                    name = "disk1"
-                    host_path {
-                        path = "/data/disk1/library"
-                    }
-                }
-                volume {
-                    name = "disk2"
-                    host_path {
-                        path = "/data/disk2/library"
-                    }
-                }
-                volume {
-                    name = "disk3"
-                    host_path {
-                        path = "/data/disk3/library"
+                dynamic "volume" {
+                    for_each = var.nzbget_volume_mounts
+
+                    content {
+                        name = volume.value.name
+                        host_path {
+                            path = volume.value.path
+                        }
                     }
                 }
             }

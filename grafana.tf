@@ -48,13 +48,12 @@ resource "kubernetes_deployment" "grafana" {
                         }
                     }
                     
-                    volume_mount {
-                        name = "grafana-config"
-                        mount_path = "/etc/grafana/config.ini"
-                    }
-                    volume_mount {
-                        name = "grafana-data-storage"
-                        mount_path = "/var/lib/grafana"
+                    dynamic "volume_mount" {
+                        for_each = var.grafana_volume_mounts
+                        content {
+                            name = volume_mount.value.name
+                            mount_path = volume_mount.value.mount_path
+                        }
                     }
                     
                     env {
@@ -81,16 +80,14 @@ resource "kubernetes_deployment" "grafana" {
                     }
                 }
 
-                volume {
-                    name = "grafana-config"
-                    host_path {
-                        path = "/home/bateau/opt/grafana/conf/grafana.ini"
-                    }
-                }
-                volume {
-                    name = "grafana-data-storage"
-                    host_path {
-                        path = "/home/bateau/opt/grafana/data"
+                dynamic "volume" {
+                    for_each = var.grafana_volume_mounts
+
+                    content {
+                        name = volume.value.name
+                        host_path {
+                            path = volume.value.path
+                        }
                     }
                 }
             }

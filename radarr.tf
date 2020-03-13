@@ -36,8 +36,8 @@ resource "kubernetes_deployment" "radarr" {
                     dynamic "volume_mount" {
                         for_each = var.radarr_volume_mounts
                         content {
-                            name = volume_mount.name
-                            mount_path = volume_mount.mount_path
+                            name = volume_mount.value.name
+                            mount_path = volume_mount.value.mount_path
                         }
                     }
                     
@@ -80,9 +80,9 @@ resource "kubernetes_deployment" "radarr" {
                     for_each = var.radarr_volume_mounts
 
                     content {
-                        name = volume.name
+                        name = volume.value.name
                         host_path {
-                            path = volume.path
+                            path = volume.value.path
                         }
                     }
                 }

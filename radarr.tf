@@ -34,7 +34,7 @@ resource "kubernetes_deployment" "radarr" {
                     image_pull_policy = "Always"
                     
                     dynamic "volume_mount" {
-                        for_each = to_set(var.radarr_volume_mounts)
+                        for_each = var.radarr_volume_mounts
                         content {
                             name = volume_mount.name
                             mount_path = volume_mount.mount_path
@@ -77,7 +77,7 @@ resource "kubernetes_deployment" "radarr" {
                 }
 
                 dynamic "volume" {
-                    for_each = to_set(var.radarr_volume_mounts)
+                    for_each = var.radarr_volume_mounts
 
                     content {
                         name = volume.name

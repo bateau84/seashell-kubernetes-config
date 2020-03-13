@@ -185,6 +185,7 @@ resource "kubernetes_role_binding" "cert-manager-cainjector_leaderelection" {
 resource "kubernetes_role_binding" "cert-manager-webhook_auth-delegator" {
   metadata {
     name = "cert-manager-webhook:auth-delegator"
+    namespace = kubernetes_namespace.cert-manager.metadata[0].name
     labels = {
       "app" = "webhook"
       "app.kubernetes.io/name" = "webhook"

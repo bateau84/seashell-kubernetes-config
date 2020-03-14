@@ -21,42 +21,37 @@ resource "kubernetes_deployment" "sonarr" {
 
             spec {
                 security_context {
-                    fs_group = var.volume_fsgroup
+                    fs_group = var.sonarr.fsgroup
                 }
 
                 node_selector = {
-                    "kubernetes.io/hostname" = "morespace"
+                    "kubernetes.io/hostname" = var.sonarr.node_selector
                 }
 
                 container {
                     name = "sonarr"
-                    image = "linuxserver/sonarr:latest"
+                    image = var.sonarr.image
                     image_pull_policy = "Always"
                     
                     dynamic "volume_mount" {
-                        for_each = var.sonarr_volume_mounts
+                        for_each = var.sonarr.volumes
                         content {
                             name = volume_mount.value.name
                             mount_path = volume_mount.value.mount_path
                         }
                     }
                     
-                    env {
-                        name = "PUID"
-                        value = var.volume_fsgroup
-                    }
-                    env {
-                        name = "PGID"
-                        value = var.volume_fsgroup
-                    }
-                    env {
-                        name = "TZ"
-                        value = "Europe/Oslo"
+                    dynamic "env" {
+                        for_each = var.sonarr.envs
+                        content {
+                            name = env.value.name
+                            value = env.value.value
+                        }
                     }
 
                     port {
                         name = "sonarr"
-                        container_port = var.sonarr_listen_port
+                        container_port = var.sonarr.port
                     }
 
                     readiness_probe {
@@ -77,7 +72,7 @@ resource "kubernetes_deployment" "sonarr" {
                 }
 
                 dynamic "volume" {
-                    for_each = var.sonarr_volume_mounts
+                    for_each = var.sonarr.volumes
 
                     content {
                         name = volume.value.name
@@ -105,8 +100,8 @@ resource "kubernetes_service" "sonarr" {
     }
     port {
         name        = "sonarr"
-        port        = var.sonarr_listen_port
-        target_port = var.sonarr_listen_port
+        port        = var.sonarr.port
+        target_port = var.sonarr.port
         protocol    = "TCP"
     }
     session_affinity = "None"
@@ -138,7 +133,7 @@ resource "kubernetes_ingress" "sonarr" {
         path {
           backend {
             service_name = "sonarr"
-            service_port = var.sonarr_listen_port
+            service_port = var.sonarr.port
           }
           path = "/"
         }

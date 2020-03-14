@@ -21,51 +21,46 @@ resource "kubernetes_deployment" "transmission" {
 
             spec {
                 security_context {
-                    fs_group = var.volume_fsgroup
+                    fs_group = var.transmission.fsgroup
                 }
 
                 node_selector = {
-                    "kubernetes.io/hostname" = "morespace"
+                    "kubernetes.io/hostname" = var.transmission.node_selector
                 }
 
                 container {
                     name = "transmission"
-                    image = "linuxserver/transmission:latest"
+                    image = var.transmission.image
                     image_pull_policy = "Always"
                     
                     dynamic "volume_mount" {
-                        for_each = var.transmission_volume_mounts
+                        for_each = var.transmission.volumes
                         content {
                             name = volume_mount.value.name
                             mount_path = volume_mount.value.mount_path
                         }
                     }
                     
-                    env {
-                        name = "PUID"
-                        value = var.volume_fsgroup
-                    }
-                    env {
-                        name = "PGID"
-                        value = var.volume_fsgroup
-                    }
-                    env {
-                        name = "TZ"
-                        value = "Europe/Oslo"
+                    dynamic "env" {
+                        for_each = var.transmission.envs
+                        content {
+                            name = env.value.name
+                            value = env.value.value
+                        }
                     }
 
                     port {
                         name = "web"
-                        container_port = var.transmission_listen_port
+                        container_port = var.transmission.port
                     }
                     port {
                         name = "tcp"
-                        container_port = var.transmission_peer_port
+                        container_port = var.transmission.peer_port
                     }
                 }
 
                 dynamic "volume" {
-                    for_each = var.transmission_volume_mounts
+                    for_each = var.transmission.volumes
 
                     content {
                         name = volume.value.name
@@ -93,8 +88,8 @@ resource "kubernetes_service" "transmission" {
     }
     port {
         name        = "transmission"
-        port        = var.transmission_listen_port
-        target_port = var.transmission_listen_port
+        port        = var.transmission.port
+        target_port = var.transmission.port
         protocol    = "TCP"
     }
     session_affinity = "None"
@@ -116,8 +111,8 @@ resource "kubernetes_service" "transmission-peer" {
     }
     port {
         name        = "transmission-peer"
-        port        = var.transmission_peer_port
-        target_port = var.transmission_peer_port
+        port        = var.transmission.peer_port
+        target_port = var.transmission.peer_port
         protocol    = "TCP"
     }
     type             = "NodePort"
@@ -148,7 +143,7 @@ resource "kubernetes_ingress" "transmission" {
         path {
           backend {
             service_name = "transmission"
-            service_port = var.transmission_listen_port
+            service_port = var.transmission.port
           }
           path = "/"
         }

@@ -19,117 +19,144 @@ variable "namespace" {
     type        = string
 }
 
-variable "volume_fsgroup" {
-    type = number
-}
-
-variable "sonarr_nodeselector" {
-    default = "morespace"
-    type = string
-}
-
-variable "sonarr_listen_port" {
-    default = "8989"
-    type = string
-}
-
-variable "sonarr_volume_mounts" {
-    type = list(
-        object(
+variable "sonarr" {
+    type = object(
+      {
+        port = string
+        node_selector = string
+        fsgroup = string
+        image = string
+        volumes = list(
+          object(
             {
-                name = string
-                mount_path = string
-                path = string
+              name = string
+              mount_path = string
+              path = string
             }
+          )
         )
+        envs = list(
+          object(
+            {
+              name = string
+              value = string
+            }
+          )
+        )
+      }
     )
 }
 
-variable "radarr_nodeselector" {
-    default = "morespace"
-    type = string
-}
-
-variable "radarr_listen_port" {
-    default = "7878"
-    type = string
-}
-
-variable "radarr_volume_mounts" {
-    type = list(
-        object(
+variable "radarr" {
+    type = object(
+      {
+        port = string
+        node_selector = string
+        fsgroup = string
+        image = string
+        volumes = list(
+          object(
             {
-                name = string
-                mount_path = string
-                path = string
+              name = string
+              mount_path = string
+              path = string
             }
+          )
         )
+        envs = list(
+          object(
+            {
+              name = string
+              value = string
+            }
+          )
+        )
+      }
     )
 }
 
-variable "transmission_nodeselector" {
-    default = "morespace"
-    type = string
-}
-
-variable "transmission_listen_port" {
-    default = "9091"
-    type = string
-}
-
-variable "transmission_peer_port" {
-    default = "31413"
-    type = string
-}
-
-variable "transmission_volume_mounts" {
-    type = list(
-        object(
+variable "transmission" {
+    type = object(
+      {
+        port = string
+        peer_port = string
+        node_selector = string
+        fsgroup = string
+        image = string
+        volumes = list(
+          object(
             {
-                name = string
-                mount_path = string
-                path = string
+              name = string
+              mount_path = string
+              path = string
             }
+          )
         )
+        envs = list(
+          object(
+            {
+              name = string
+              value = string
+            }
+          )
+        )
+      }
     )
 }
 
-variable "nzbget_nodeselector" {
-    default = "morespace"
-    type = string
-}
-
-variable "nzbget_listen_port" {
-    default = "6789"
-    type = string
-}
-
-variable "nzbget_volume_mounts" {
-    type = list(
-        object(
+variable "nzbget" {
+    type = object(
+      {
+        port = string
+        node_selector = string
+        fsgroup = string
+        image = string
+        volumes = list(
+          object(
             {
-                name = string
-                mount_path = string
-                path = string
+              name = string
+              mount_path = string
+              path = string
             }
+          )
         )
+        envs = list(
+          object(
+            {
+              name = string
+              value = string
+            }
+          )
+        )
+      }
     )
 }
 
-variable "grafana_listen_port" {
-    default = "3000"
-    type = string
-}
-
-variable "grafana_volume_mounts" {
-    type = list(
-        object(
+variable "grafana" {
+    type = object(
+      {
+        port = string
+        node_selector = string
+        fsgroup = string
+        image = string
+        volumes = list(
+          object(
             {
-                name = string
-                mount_path = string
-                path = string
+              name = string
+              mount_path = string
+              path = string
             }
+          )
         )
+        envs = list(
+          object(
+            {
+              name = string
+              value = string
+            }
+          )
+        )
+      }
     )
 }
 

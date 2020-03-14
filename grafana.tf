@@ -29,12 +29,12 @@ resource "kubernetes_deployment" "grafana" {
                 }
 
                 node_selector = {
-                    "kubernetes.io/hostname" = "morespace"
+                    "kubernetes.io/hostname" = var.grafana.node_selector
                 }
 
                 container {
                     name = "grafana"
-                    image = "grafana/grafana:6.5.2"
+                    image = var.grafana.image
                     image_pull_policy = "Always"
 
                     resources {
@@ -49,39 +49,30 @@ resource "kubernetes_deployment" "grafana" {
                     }
                     
                     dynamic "volume_mount" {
-                        for_each = var.grafana_volume_mounts
+                        for_each = var.grafana.volumes
                         content {
                             name = volume_mount.value.name
                             mount_path = volume_mount.value.mount_path
                         }
                     }
                     
-                    env {
-                        name = "GF_AUTH_BASIC_ENABLED"
-                        value = "false"
-                    }
-                    env {
-                        name = "GF_AUTH_ANONYMOUS_ENABLED"
-                        value = "true"
-                    }
-                    env {
-                        name = "GF_AUTH_ANONYMOUS_ORG_ROLE"
-                        value = "Admin"
-                    }
-                    env {
-                        name = "GF_SERVER_ROOT_URL"
-                        value = "%(protocol)s://%(domain)s:%(http_port)s/"
+                    dynamic "env" {
+                        for_each = var.grafana.envs
+                        content {
+                            name = env.value.name
+                            value = env.value.value
+                        }
                     }
 
                     port {
                         name = "http"
-                        container_port = "3000"
+                        container_port = var.grafana.port
                         protocol = "TCP"
                     }
                 }
 
                 dynamic "volume" {
-                    for_each = var.grafana_volume_mounts
+                    for_each = var.grafana.volumes
 
                     content {
                         name = volume.value.name
@@ -109,8 +100,8 @@ resource "kubernetes_service" "grafana" {
     }
     port {
         name        = "grafana"
-        port        = var.grafana_listen_port
-        target_port = var.grafana_listen_port
+        port        = var.grafana.port
+        target_port = var.grafana.port
         protocol    = "TCP"
     }
     session_affinity = "None"
@@ -139,7 +130,7 @@ resource "kubernetes_ingress" "grafana" {
         path {
           backend {
             service_name = "grafana"
-            service_port = var.grafana_listen_port
+            service_port = var.grafana.port
           }
           path = "/"
         }

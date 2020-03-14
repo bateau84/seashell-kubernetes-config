@@ -21,42 +21,37 @@ resource "kubernetes_deployment" "radarr" {
 
             spec {
                 security_context {
-                    fs_group = var.volume_fsgroup
+                    fs_group = var.radarr.fsgroup
                 }
 
                 node_selector = {
-                    "kubernetes.io/hostname" = "morespace"
+                    "kubernetes.io/hostname" = var.radarr.node_selector
                 }
 
                 container {
                     name = "radarr"
-                    image = "linuxserver/radarr:latest"
+                    image = var.radarr.image
                     image_pull_policy = "Always"
                     
                     dynamic "volume_mount" {
-                        for_each = var.radarr_volume_mounts
+                        for_each = var.radarr.volumes
                         content {
                             name = volume_mount.value.name
                             mount_path = volume_mount.value.mount_path
                         }
                     }
-                    
-                    env {
-                        name = "PUID"
-                        value = var.volume_fsgroup
-                    }
-                    env {
-                        name = "PGID"
-                        value = var.volume_fsgroup
-                    }
-                    env {
-                        name = "TZ"
-                        value = "Europe/Oslo"
+
+                    dynamic "env" {
+                        for_each = var.radarr.envs
+                        content {
+                            name = env.value.name
+                            value = env.value.value
+                        }
                     }
 
                     port {
                         name = "radarr"
-                        container_port = var.radarr_listen_port
+                        container_port = var.radarr.port
                     }
 
                     readiness_probe {
@@ -77,8 +72,7 @@ resource "kubernetes_deployment" "radarr" {
                 }
 
                 dynamic "volume" {
-                    for_each = var.radarr_volume_mounts
-
+                    for_each = var.radarr.volumes
                     content {
                         name = volume.value.name
                         host_path {
@@ -105,8 +99,8 @@ resource "kubernetes_service" "radarr" {
     }
     port {
         name        = "radarr"
-        port        = var.radarr_listen_port
-        target_port = var.radarr_listen_port
+        port        = var.radarr.port
+        target_port = var.radarr.port
         protocol    = "TCP"
     }
     session_affinity = "None"
@@ -138,7 +132,7 @@ resource "kubernetes_ingress" "radarr" {
         path {
           backend {
             service_name = "radarr"
-            service_port = var.radarr_listen_port
+            service_port = var.radarr.port
           }
           path = "/"
         }

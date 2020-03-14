@@ -21,47 +21,42 @@ resource "kubernetes_deployment" "nzbget" {
 
             spec {
                 security_context {
-                    fs_group = var.volume_fsgroup
+                    fs_group = var.nzbget.fsgroup
                 }
 
                 node_selector = {
-                    "kubernetes.io/hostname" = "morespace"
+                    "kubernetes.io/hostname" = var.nzbget.node_selector
                 }
 
                 container {
                     name = "nzbget"
-                    image = "linuxserver/nzbget:latest"
+                    image = var.nzbget.image
                     image_pull_policy = "Always"
                     
                     dynamic "volume_mount" {
-                        for_each = var.nzbget_volume_mounts
+                        for_each = var.nzbget.volumes
                         content {
                             name = volume_mount.value.name
                             mount_path = volume_mount.value.mount_path
                         }
                     }
                     
-                    env {
-                        name = "PUID"
-                        value = var.volume_fsgroup
-                    }
-                    env {
-                        name = "PGID"
-                        value = var.volume_fsgroup
-                    }
-                    env {
-                        name = "TZ"
-                        value = "Europe/Oslo"
+                    dynamic "env" {
+                        for_each = var.nzbget.envs
+                        content {
+                            name = env.value.name
+                            value = env.value.value
+                        }
                     }
 
                     port {
                         name = "nzbget"
-                        container_port = var.nzbget_listen_port
+                        container_port = var.nzbget.port
                     }
                 }
 
                 dynamic "volume" {
-                    for_each = var.nzbget_volume_mounts
+                    for_each = var.nzbget.volumes
 
                     content {
                         name = volume.value.name
@@ -89,8 +84,8 @@ resource "kubernetes_service" "nzbget" {
     }
     port {
         name        = "nzbget"
-        port        = var.nzbget_listen_port
-        target_port = var.nzbget_listen_port
+        port        = var.nzbget.port
+        target_port = var.nzbget.port
         protocol    = "TCP"
     }
     session_affinity = "None"
@@ -122,7 +117,7 @@ resource "kubernetes_ingress" "nzbget" {
         path {
           backend {
             service_name = "nzbget"
-            service_port = var.nzbget_listen_port
+            service_port = var.nzbget.port
           }
           path = "/"
         }

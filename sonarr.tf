@@ -21,20 +21,20 @@ resource "kubernetes_deployment" "sonarr" {
 
             spec {
                 security_context {
-                    fs_group = var.sonarr.fsgroup
+                    fs_group = local.sonarr_merged.fsgroup
                 }
 
                 node_selector = {
-                    "kubernetes.io/hostname" = var.sonarr.node_selector
+                    "kubernetes.io/hostname" = local.sonarr_merged.node_selector
                 }
 
                 container {
                     name = "sonarr"
-                    image = var.sonarr.image
+                    image = local.sonarr_merged.image
                     image_pull_policy = "Always"
                     
                     dynamic "volume_mount" {
-                        for_each = var.sonarr.volumes
+                        for_each = local.sonarr_merged.volumes
                         content {
                             name = volume_mount.value.name
                             mount_path = volume_mount.value.mount_path
@@ -42,7 +42,7 @@ resource "kubernetes_deployment" "sonarr" {
                     }
                     
                     dynamic "env" {
-                        for_each = var.sonarr.envs
+                        for_each = local.sonarr_merged.envs
                         content {
                             name = env.value.name
                             value = env.value.value
@@ -51,7 +51,7 @@ resource "kubernetes_deployment" "sonarr" {
 
                     port {
                         name = "sonarr"
-                        container_port = var.sonarr.port
+                        container_port = local.sonarr_merged.port
                     }
 
                     readiness_probe {
@@ -72,7 +72,7 @@ resource "kubernetes_deployment" "sonarr" {
                 }
 
                 dynamic "volume" {
-                    for_each = var.sonarr.volumes
+                    for_each = local.sonarr_merged.volumes
 
                     content {
                         name = volume.value.name
@@ -100,8 +100,8 @@ resource "kubernetes_service" "sonarr" {
     }
     port {
         name        = "sonarr"
-        port        = var.sonarr.port
-        target_port = var.sonarr.port
+        port        = local.sonarr_merged.port
+        target_port = local.sonarr_merged.port
         protocol    = "TCP"
     }
     session_affinity = "None"
@@ -133,7 +133,7 @@ resource "kubernetes_ingress" "sonarr" {
         path {
           backend {
             service_name = "sonarr"
-            service_port = var.sonarr.port
+            service_port = local.sonarr_merged.port
           }
           path = "/"
         }

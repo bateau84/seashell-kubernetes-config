@@ -21,20 +21,20 @@ resource "kubernetes_deployment" "radarr" {
 
             spec {
                 security_context {
-                    fs_group = var.radarr.fsgroup
+                    fs_group = local.radarr_merged.fsgroup
                 }
 
                 node_selector = {
-                    "kubernetes.io/hostname" = var.radarr.node_selector
+                    "kubernetes.io/hostname" = local.radarr_merged.node_selector
                 }
 
                 container {
                     name = "radarr"
-                    image = var.radarr.image
+                    image = local.radarr_merged.image
                     image_pull_policy = "Always"
                     
                     dynamic "volume_mount" {
-                        for_each = var.radarr.volumes
+                        for_each = local.radarr_merged.volumes
                         content {
                             name = volume_mount.value.name
                             mount_path = volume_mount.value.mount_path
@@ -42,7 +42,7 @@ resource "kubernetes_deployment" "radarr" {
                     }
 
                     dynamic "env" {
-                        for_each = var.radarr.envs
+                        for_each = local.radarr_merged.envs
                         content {
                             name = env.value.name
                             value = env.value.value
@@ -51,7 +51,7 @@ resource "kubernetes_deployment" "radarr" {
 
                     port {
                         name = "radarr"
-                        container_port = var.radarr.port
+                        container_port = local.radarr_merged.port
                     }
 
                     readiness_probe {
@@ -72,7 +72,7 @@ resource "kubernetes_deployment" "radarr" {
                 }
 
                 dynamic "volume" {
-                    for_each = var.radarr.volumes
+                    for_each = local.radarr_merged.volumes
                     content {
                         name = volume.value.name
                         host_path {
@@ -99,8 +99,8 @@ resource "kubernetes_service" "radarr" {
     }
     port {
         name        = "radarr"
-        port        = var.radarr.port
-        target_port = var.radarr.port
+        port        = local.radarr_merged.port
+        target_port = local.radarr_merged.port
         protocol    = "TCP"
     }
     session_affinity = "None"
@@ -132,7 +132,7 @@ resource "kubernetes_ingress" "radarr" {
         path {
           backend {
             service_name = "radarr"
-            service_port = var.radarr.port
+            service_port = local.radarr_merged.port
           }
           path = "/"
         }

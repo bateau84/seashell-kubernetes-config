@@ -29,12 +29,12 @@ resource "kubernetes_deployment" "grafana" {
                 }
 
                 node_selector = {
-                    "kubernetes.io/hostname" = var.grafana.node_selector
+                    "kubernetes.io/hostname" = local.grafana_merged.node_selector
                 }
 
                 container {
                     name = "grafana"
-                    image = var.grafana.image
+                    image = local.grafana_merged.image
                     image_pull_policy = "Always"
 
                     resources {
@@ -49,7 +49,7 @@ resource "kubernetes_deployment" "grafana" {
                     }
                     
                     dynamic "volume_mount" {
-                        for_each = var.grafana.volumes
+                        for_each = local.grafana_merged.volumes
                         content {
                             name = volume_mount.value.name
                             mount_path = volume_mount.value.mount_path
@@ -57,7 +57,7 @@ resource "kubernetes_deployment" "grafana" {
                     }
                     
                     dynamic "env" {
-                        for_each = var.grafana.envs
+                        for_each = local.grafana_merged.envs
                         content {
                             name = env.value.name
                             value = env.value.value
@@ -66,13 +66,13 @@ resource "kubernetes_deployment" "grafana" {
 
                     port {
                         name = "http"
-                        container_port = var.grafana.port
+                        container_port = local.grafana_merged.port
                         protocol = "TCP"
                     }
                 }
 
                 dynamic "volume" {
-                    for_each = var.grafana.volumes
+                    for_each = local.grafana_merged.volumes
 
                     content {
                         name = volume.value.name
@@ -100,8 +100,8 @@ resource "kubernetes_service" "grafana" {
     }
     port {
         name        = "grafana"
-        port        = var.grafana.port
-        target_port = var.grafana.port
+        port        = local.grafana_merged.port
+        target_port = local.grafana_merged.port
         protocol    = "TCP"
     }
     session_affinity = "None"
@@ -130,7 +130,7 @@ resource "kubernetes_ingress" "grafana" {
         path {
           backend {
             service_name = "grafana"
-            service_port = var.grafana.port
+            service_port = local.grafana_merged.port
           }
           path = "/"
         }

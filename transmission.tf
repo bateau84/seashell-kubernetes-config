@@ -21,20 +21,20 @@ resource "kubernetes_deployment" "transmission" {
 
             spec {
                 security_context {
-                    fs_group = var.transmission.fsgroup
+                    fs_group = local.transmission_merged.fsgroup
                 }
 
                 node_selector = {
-                    "kubernetes.io/hostname" = var.transmission.node_selector
+                    "kubernetes.io/hostname" = local.transmission_merged.node_selector
                 }
 
                 container {
                     name = "transmission"
-                    image = var.transmission.image
+                    image = local.transmission_merged.image
                     image_pull_policy = "Always"
                     
                     dynamic "volume_mount" {
-                        for_each = var.transmission.volumes
+                        for_each = local.transmission_merged.volumes
                         content {
                             name = volume_mount.value.name
                             mount_path = volume_mount.value.mount_path
@@ -42,7 +42,7 @@ resource "kubernetes_deployment" "transmission" {
                     }
                     
                     dynamic "env" {
-                        for_each = var.transmission.envs
+                        for_each = local.transmission_merged.envs
                         content {
                             name = env.value.name
                             value = env.value.value
@@ -51,16 +51,16 @@ resource "kubernetes_deployment" "transmission" {
 
                     port {
                         name = "web"
-                        container_port = var.transmission.port
+                        container_port = local.transmission_merged.port
                     }
                     port {
                         name = "tcp"
-                        container_port = var.transmission.peer_port
+                        container_port = local.transmission_merged.peer_port
                     }
                 }
 
                 dynamic "volume" {
-                    for_each = var.transmission.volumes
+                    for_each = local.transmission_merged.volumes
 
                     content {
                         name = volume.value.name
@@ -88,8 +88,8 @@ resource "kubernetes_service" "transmission" {
     }
     port {
         name        = "transmission"
-        port        = var.transmission.port
-        target_port = var.transmission.port
+        port        = local.transmission_merged.port
+        target_port = local.transmission_merged.port
         protocol    = "TCP"
     }
     session_affinity = "None"
@@ -111,8 +111,8 @@ resource "kubernetes_service" "transmission-peer" {
     }
     port {
         name        = "transmission-peer"
-        port        = var.transmission.peer_port
-        target_port = var.transmission.peer_port
+        port        = local.transmission_merged.peer_port
+        target_port = local.transmission_merged.peer_port
         protocol    = "TCP"
     }
     type             = "NodePort"
@@ -143,7 +143,7 @@ resource "kubernetes_ingress" "transmission" {
         path {
           backend {
             service_name = "transmission"
-            service_port = var.transmission.port
+            service_port = local.transmission_merged.port
           }
           path = "/"
         }

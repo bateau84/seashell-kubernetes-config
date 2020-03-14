@@ -19,146 +19,206 @@ variable "namespace" {
     type        = string
 }
 
-variable "sonarr" {
-    type = object(
-      {
-        port = string
-        node_selector = string
-        fsgroup = string
-        image = string
-        volumes = list(
-          object(
-            {
-              name = string
-              mount_path = string
-              path = string
-            }
+variable "deployments" {
+    type = list(
+      object(
+        {
+          name = string
+          ports = list(
+            object(
+              {
+                name = string
+                port = string
+                ingress = bool
+                target_port = string
+                protocol = string
+              }
+            )
           )
-        )
-        envs = list(
-          object(
+          annotations = any
+          node_selector = object(
             {
-              name = string
+              key = string
               value = string
             }
           )
-        )
-      }
+          fsgroup = string
+          image = string
+          image_pull_policy = string
+          readiness_probe = object(
+            {
+              initial_delay_seconds = string
+              period_seconds = string
+            }
+          )
+          liveness_probe = object(
+            {
+              initial_delay_seconds = string
+              period_seconds = string
+            }
+          )
+          volumes = list(
+            object(
+              {
+                name = string
+                mount_path = string
+                path = string
+              }
+            )
+          )
+          envs = list(
+            object(
+              {
+                name = string
+                value = string
+              }
+            )
+          )
+        }
+      )
     )
 }
 
-variable "radarr" {
-    type = object(
-      {
-        port = string
-        node_selector = string
-        fsgroup = string
-        image = string
-        volumes = list(
-          object(
-            {
-              name = string
-              mount_path = string
-              path = string
-            }
-          )
-        )
-        envs = list(
-          object(
-            {
-              name = string
-              value = string
-            }
-          )
-        )
-      }
-    )
-}
+// variable "sonarr" {
+//     type = object(
+//       {
+//         port = string
+//         node_selector = string
+//         fsgroup = string
+//         image = string
+//         volumes = list(
+//           object(
+//             {
+//               name = string
+//               mount_path = string
+//               path = string
+//             }
+//           )
+//         )
+//         envs = list(
+//           object(
+//             {
+//               name = string
+//               value = string
+//             }
+//           )
+//         )
+//       }
+//     )
+// }
 
-variable "transmission" {
-    type = object(
-      {
-        port = string
-        peer_port = string
-        node_selector = string
-        fsgroup = string
-        image = string
-        volumes = list(
-          object(
-            {
-              name = string
-              mount_path = string
-              path = string
-            }
-          )
-        )
-        envs = list(
-          object(
-            {
-              name = string
-              value = string
-            }
-          )
-        )
-      }
-    )
-}
+// variable "radarr" {
+//     type = object(
+//       {
+//         port = string
+//         node_selector = string
+//         fsgroup = string
+//         image = string
+//         volumes = list(
+//           object(
+//             {
+//               name = string
+//               mount_path = string
+//               path = string
+//             }
+//           )
+//         )
+//         envs = list(
+//           object(
+//             {
+//               name = string
+//               value = string
+//             }
+//           )
+//         )
+//       }
+//     )
+// }
 
-variable "nzbget" {
-    type = object(
-      {
-        port = string
-        node_selector = string
-        fsgroup = string
-        image = string
-        volumes = list(
-          object(
-            {
-              name = string
-              mount_path = string
-              path = string
-            }
-          )
-        )
-        envs = list(
-          object(
-            {
-              name = string
-              value = string
-            }
-          )
-        )
-      }
-    )
-}
+// variable "transmission" {
+//     type = object(
+//       {
+//         port = string
+//         peer_port = string
+//         node_selector = string
+//         fsgroup = string
+//         image = string
+//         volumes = list(
+//           object(
+//             {
+//               name = string
+//               mount_path = string
+//               path = string
+//             }
+//           )
+//         )
+//         envs = list(
+//           object(
+//             {
+//               name = string
+//               value = string
+//             }
+//           )
+//         )
+//       }
+//     )
+// }
 
-variable "grafana" {
-    type = object(
-      {
-        port = string
-        node_selector = string
-        fsgroup = string
-        image = string
-        volumes = list(
-          object(
-            {
-              name = string
-              mount_path = string
-              path = string
-            }
-          )
-        )
-        envs = list(
-          object(
-            {
-              name = string
-              value = string
-            }
-          )
-        )
-      }
-    )
-}
+// variable "nzbget" {
+//     type = object(
+//       {
+//         port = string
+//         node_selector = string
+//         fsgroup = string
+//         image = string
+//         volumes = list(
+//           object(
+//             {
+//               name = string
+//               mount_path = string
+//               path = string
+//             }
+//           )
+//         )
+//         envs = list(
+//           object(
+//             {
+//               name = string
+//               value = string
+//             }
+//           )
+//         )
+//       }
+//     )
+// }
+
+// variable "grafana" {
+//     type = object(
+//       {
+//         port = string
+//         node_selector = string
+//         fsgroup = string
+//         image = string
+//         volumes = list(
+//           object(
+//             {
+//               name = string
+//               mount_path = string
+//               path = string
+//             }
+//           )
+//         )
+//         envs = list(
+//           object(
+//             {
+//               name = string
+//               value = string
+//             }
+//           )
+//         )
+//       }
+//     )
+// }
 
 variable "certmanager_version" {
     type = string

@@ -22,7 +22,9 @@ resource "kubernetes_deployment" "deployment" {
 
             spec {
                 security_context {
-                    fs_group = each.value.fsgroup
+                    run_as_user = length(lookup(each.value.security_context, "run_as_user", "")) > 0 ? each.value.security_context.run_as_user : null
+                    run_as_group = length(lookup(each.value.security_context, "run_as_group", "")) > 0 ? each.value.security_context.run_as_group : null
+                    fs_group = length(lookup(each.value.security_context, "fs_group", "")) > 0 ? each.value.security_context.fs_group : null
                 }
 
                 node_selector = {

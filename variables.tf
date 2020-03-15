@@ -42,7 +42,7 @@ variable "deployments" {
               value = string
             }
           )
-          fsgroup = string
+          security_context = any
           image = string
           image_pull_policy = string
           readiness_probe = object(

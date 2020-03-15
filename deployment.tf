@@ -12,26 +12,25 @@ resource "kubernetes_deployment" "deployment" {
                 app = each.key
             }
         }
-
+        
         template {
             metadata {
                 labels = {
                     app = each.key
                 }
             }
-
+            
             spec {
                 security_context {
                     run_as_user = length(lookup(each.value.security_context, "run_as_user", "")) > 0 ? each.value.security_context.run_as_user : null
                     run_as_group = length(lookup(each.value.security_context, "run_as_group", "")) > 0 ? each.value.security_context.run_as_group : null
                     fs_group = length(lookup(each.value.security_context, "fs_group", "")) > 0 ? each.value.security_context.fs_group : null
-                    allow_privilege_escalation = length(lookup(each.value.security_context, "allow_privilege_escalation", "")) > 0 ? each.value.security_context.allow_privilege_escalation : null
                 }
 
                 node_selector = {
                     (each.value.node_selector.key) = each.value.node_selector.value
                 }
-
+                
                 container {
                     name = each.key
                     image = each.value.image

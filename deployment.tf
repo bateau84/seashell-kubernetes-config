@@ -3,6 +3,9 @@ resource "kubernetes_deployment" "deployment" {
     metadata {
         name = each.key
         namespace = kubernetes_namespace.namespace.metadata[0].name
+        labels = {
+            app = each.key
+        }
     }
 
     spec {
@@ -102,7 +105,7 @@ resource "kubernetes_service" "service" {
     }
     spec {
         selector = {
-        app = each.key
+            app = each.key
         }
         dynamic "port" {
             for_each = each.value.ports
@@ -126,6 +129,9 @@ resource "kubernetes_ingress" "ingress" {
     metadata {
         name        = each.key
         namespace   = kubernetes_namespace.namespace.metadata[0].name
+        labels = {
+            app = each.key
+        }
         annotations = each.value.annotations
     }
 

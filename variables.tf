@@ -42,7 +42,9 @@ variable "deployments" {
               value = string
             }
           )
-          security_context = any
+          run_as_user = string
+          run_as_group = string
+          fs_group = string
           image = string
           image_pull_policy = string
           readiness_probe = object(

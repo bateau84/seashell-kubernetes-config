@@ -1,6 +1,6 @@
 #!/bin/bash
-set -e
-set -x
+#set -e
+#set -x
 
 export KUBECONFIG=${KUBE_CONFIG}
 
